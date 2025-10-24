@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Any, Iterable
+from typing import Any, Iterator
 
 from sqlalchemy import bindparam, text
 from sqlalchemy.dialects.postgresql import ARRAY, TEXT
@@ -58,7 +58,7 @@ class DwhDashboardService:
         self.schema = schema
 
     @contextmanager
-    def _session_scope(self) -> Iterable[Session]:
+    def _session_scope(self) -> Iterator[Session]:
         session = self.session_factory()
         try:
             yield session
