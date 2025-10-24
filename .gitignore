@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+
+# PyCharm / VSCode
+.idea/
+.vscode/
+
+# Distribution / packaging
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Logs
+logs/
+*.log
+
+# Env files
+.env
+.env.*
