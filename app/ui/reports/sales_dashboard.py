@@ -15,10 +15,13 @@ from app.dwh import (
     DwhDashboardService,
     get_dwh_dashboard_service,
 )
+from .registry import ReportEntry, add_report
 
 logger = logging.getLogger(__name__)
 
-FIGURE_BG_COLOR = "#f8f9fb"
+FIGURE_BG_COLOR = "#ffffff"
+DEFAULT_FONT_FAMILY = "Open Sans, Arial, sans-serif"
+SPINNER_COLOR = "#55246A"
 
 
 def _default_interactions() -> dict[str, Any]:
@@ -65,7 +68,7 @@ def layout() -> Component:
     if not snapshot:
         return dbc.Container(
             [
-                html.H2("Дашборд"),
+                html.Div(html.H2("Дашборд"), className="report-header"),
                 dbc.Alert(
                     "Источник данных не настроен. Проверьте переменную окружения DWH_DB_DSN.",
                     color="warning",
@@ -74,6 +77,7 @@ def layout() -> Component:
             ],
             fluid=True,
             className="gy-4",
+            style={"fontFamily": DEFAULT_FONT_FAMILY},
         )
 
     start_date = snapshot.min_date.isoformat() if snapshot.min_date else None
@@ -82,7 +86,7 @@ def layout() -> Component:
     return dbc.Container(
         [
             dcc.Store(id="dashboard-interactions-store", data=_default_interactions()),
-            html.H2("Продажи и прибыль"),
+            html.Div(html.H2("Продажи и прибыль"), className="report-header"),
             dbc.Alert(id="dashboard-feedback", is_open=False, color="info", className="mt-3"),
             dbc.Card(
                 dbc.CardBody(
@@ -181,7 +185,7 @@ def layout() -> Component:
                         ),
                     ]
                 ),
-                className="mt-4",
+                className="mt-4 filter-card shadow-sm border-0",
             ),
             dbc.Row(
                 [
@@ -191,9 +195,10 @@ def layout() -> Component:
                                 dcc.Loading(
                                     dcc.Graph(id="dashboard-graph-region", config={"displayModeBar": False}),
                                     type="default",
+                                    color=SPINNER_COLOR,
                                 )
                             ),
-                            className="h-100 shadow-sm",
+                            className="h-100 chart-card shadow-sm border-0",
                         ),
                         md=6,
                     ),
@@ -206,9 +211,10 @@ def layout() -> Component:
                                         config={"displayModeBar": True, "modeBarButtonsToAdd": ["select2d"]},
                                     ),
                                     type="default",
+                                    color=SPINNER_COLOR,
                                 )
                             ),
-                            className="h-100 shadow-sm",
+                            className="h-100 chart-card shadow-sm border-0",
                         ),
                         md=6,
                     ),
@@ -223,9 +229,10 @@ def layout() -> Component:
                                 dcc.Loading(
                                     dcc.Graph(id="dashboard-graph-category", config={"displayModeBar": False}),
                                     type="default",
+                                    color=SPINNER_COLOR,
                                 )
                             ),
-                            className="h-100 shadow-sm",
+                            className="h-100 chart-card shadow-sm border-0",
                         ),
                         md=6,
                     ),
@@ -238,9 +245,10 @@ def layout() -> Component:
                                         config={"displayModeBar": True, "modeBarButtonsToAdd": ["select2d", "lasso2d"]},
                                     ),
                                     type="default",
+                                    color=SPINNER_COLOR,
                                 )
                             ),
-                            className="h-100 shadow-sm",
+                            className="h-100 chart-card shadow-sm border-0",
                         ),
                         md=6,
                     ),
@@ -249,33 +257,40 @@ def layout() -> Component:
             ),
             html.Div(
                 html.H4("Детализация продаж", className="mb-0"),
-                className="bg-light rounded-3 p-3 mt-4",
+                className="section-title mt-4",
             ),
             dbc.Row(
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            dash_table.DataTable(
-                                id="dashboard-sales-table",
-                                data=[],
-                                columns=TABLE_COLUMNS,
-                                page_size=20,
-                                sort_action="native",
-                                filter_action="native",
-                                style_table={"overflowX": "auto"},
-                                style_cell={"whiteSpace": "nowrap", "textAlign": "left"},
-                                style_header={"fontWeight": "bold"},
-                            )
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                dash_table.DataTable(
+                                    id="dashboard-sales-table",
+                                    data=[],
+                                    columns=TABLE_COLUMNS,
+                                    page_size=20,
+                                    sort_action="native",
+                                    filter_action="native",
+                                    style_table={"overflowX": "auto"},
+                                    style_cell={
+                                        "whiteSpace": "nowrap",
+                                        "textAlign": "left",
+                                        "fontFamily": DEFAULT_FONT_FAMILY,
+                                    },
+                                    style_header={"fontWeight": "bold", "fontFamily": DEFAULT_FONT_FAMILY},
+                                )
+                            ),
+                            className="shadow-sm chart-card border-0",
                         ),
-                        className="shadow-sm",
+                        md=12,
                     ),
-                    md=12,
-                ),
+                ],
                 className="g-0",
             ),
         ],
         fluid=True,
         className="gy-4",
+        style={"fontFamily": DEFAULT_FONT_FAMILY},
     )
 
 
@@ -525,6 +540,7 @@ def _build_region_figure(data: list[dict[str, Any]]) -> go.Figure:
     )
     fig.update_layout(title="Распределение продаж по регионам")
     fig.update_layout(plot_bgcolor=FIGURE_BG_COLOR, paper_bgcolor=FIGURE_BG_COLOR)
+    fig.update_layout(font={"family": DEFAULT_FONT_FAMILY})
     return fig
 
 
@@ -548,6 +564,7 @@ def _build_monthly_figure(data: list[dict[str, Any]]) -> go.Figure:
     fig.update_layout(title="Динамика продаж по месяцам", xaxis_title="Месяц", yaxis_title="Выручка, ₽")
     fig.update_xaxes(tickvals=x_values, ticktext=months_ru)
     fig.update_layout(plot_bgcolor=FIGURE_BG_COLOR, paper_bgcolor=FIGURE_BG_COLOR)
+    fig.update_layout(font={"family": DEFAULT_FONT_FAMILY})
     return fig
 
 
@@ -565,6 +582,7 @@ def _build_category_figure(data: list[dict[str, Any]]) -> go.Figure:
     )
     fig.update_layout(title="Продажи по категориям", xaxis_title="Категория", yaxis_title="Выручка, ₽")
     fig.update_layout(plot_bgcolor=FIGURE_BG_COLOR, paper_bgcolor=FIGURE_BG_COLOR)
+    fig.update_layout(font={"family": DEFAULT_FONT_FAMILY})
     return fig
 
 
@@ -614,6 +632,7 @@ def _build_scatter_figure(data: list[dict[str, Any]]) -> go.Figure:
         title="Прибыль vs Количество", xaxis_title="Количество", yaxis_title="Прибыль, ₽", dragmode="select"
     )
     fig.update_layout(plot_bgcolor=FIGURE_BG_COLOR, paper_bgcolor=FIGURE_BG_COLOR)
+    fig.update_layout(font={"family": DEFAULT_FONT_FAMILY})
     return fig
 
 
@@ -656,6 +675,7 @@ def _empty_figure(message: str) -> go.Figure:
         margin={"l": 20, "r": 20, "t": 40, "b": 20},
     )
     fig.update_layout(plot_bgcolor=FIGURE_BG_COLOR, paper_bgcolor=FIGURE_BG_COLOR)
+    fig.update_layout(font={"family": DEFAULT_FONT_FAMILY})
     return fig
 
 
@@ -676,3 +696,16 @@ def _format_month(value: datetime) -> str:
     }
     month = month_map.get(value.month, "")
     return f"{value.day} {month} {value.year}".strip()
+
+
+add_report(
+    ReportEntry(
+        code="sales_dashboard",
+        name="Интерактивный дашборд",
+        route="/dashboard",
+        layout=layout,
+        register_callbacks=register_callbacks,
+        permission_resource="dashboard",
+        description="Просмотр ключевых метрик продаж и прибыли в режиме реального времени.",
+    )
+)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import asdict
-from typing import Any, Iterable
+from typing import Any, Iterable, Sequence
 
 import dash
 import dash_bootstrap_components as dbc
@@ -67,17 +67,27 @@ def layout() -> Component:
                 [
                     dbc.Col(
                         [
-                            html.H2("Административная панель"),
-                            html.P("Управление пользователями, ролями и группами."),
+                            html.Div(html.H2("Административная панель"), className="report-header"),
+                            html.P(
+                                "Управление пользователями, ролями и группами.",
+                                className="admin-subtitle mt-2",
+                            ),
                         ],
                         md=9,
                     ),
                     dbc.Col(
-                        dbc.Button("Обновить", id="admin-refresh-button", color="secondary", className="mt-2 mt-md-0", n_clicks=0),
+                        dbc.Button(
+                            "Обновить",
+                            id="admin-refresh-button",
+                            color="secondary",
+                            className="mt-2 mt-md-0",
+                            n_clicks=0,
+                        ),
                         md=3,
                         className="text-md-end",
                     ),
-                ]
+                ],
+                className="align-items-center g-3",
             ),
             dbc.Alert(id="admin-feedback", is_open=False, color="info", className="mt-3"),
             dbc.Tabs(
@@ -166,7 +176,7 @@ def layout() -> Component:
                                                             dbc.Button(
                                                                 "Сохранить изменения",
                                                                 id="admin-user-update",
-                                                                color="success",
+                                                                color="primary",
                                                                 className="mt-2",
                                                                 n_clicks=0,
                                                                 disabled=True,
@@ -245,7 +255,7 @@ def layout() -> Component:
                                                             dbc.Button(
                                                                 "Сохранить изменения",
                                                                 id="admin-role-update",
-                                                                color="success",
+                                                                color="primary",
                                                                 className="mt-2",
                                                                 n_clicks=0,
                                                                 disabled=True,
@@ -322,7 +332,7 @@ def layout() -> Component:
                                                             dbc.Button(
                                                                 "Сохранить изменения",
                                                                 id="admin-group-update",
-                                                                color="success",
+                                                                color="primary",
                                                                 className="mt-2",
                                                                 n_clicks=0,
                                                                 disabled=True,
@@ -408,11 +418,12 @@ def layout() -> Component:
                             ),
                         ],
                     ),
-                ]
+                ],
+                className="admin-tabs mt-4",
             ),
         ],
         fluid=True,
-        className="gy-4",
+        className="gy-4 admin-page",
     )
 
 
@@ -584,8 +595,13 @@ def _render_reports_table(reports: Iterable[dict[str, Any]], roles: Iterable[dic
 
     role_map: dict[int, list[str]] = {}
     for role in roles:
+        role_name = role.get("role_name")
+        if not isinstance(role_name, str):
+            continue
         for report_id in role.get("report_ids", []) or []:
-            role_map.setdefault(report_id, []).append(role.get("role_name"))
+            if not isinstance(report_id, int):
+                continue
+            role_map.setdefault(report_id, []).append(role_name)
 
     header = html.Thead(
         html.Tr(
@@ -602,12 +618,14 @@ def _render_reports_table(reports: Iterable[dict[str, Any]], roles: Iterable[dic
 
     rows = []
     for report in reports_list:
-        roles_for_report = ", ".join(sorted(role_map.get(report.get("report_id"), []))) or "—"
+        report_id = report.get("report_id")
+        role_names = sorted(role_map.get(report_id, [])) if isinstance(report_id, int) else []
+        roles_for_report = ", ".join(role_names) or "—"
         status = "Активен" if report.get("is_active") else "Отключен"
         rows.append(
             html.Tr(
                 [
-                    html.Td(report.get("report_id")),
+                    html.Td(report_id),
                     html.Td(report.get("report_code")),
                     html.Td(report.get("report_name") or "—"),
                     html.Td(report.get("route_path") or "—"),
@@ -987,12 +1005,18 @@ def register_callbacks(app: dash.Dash) -> None:
                 if permissions_payload is None and role_permissions is not None and not role_permissions.strip():
                     permissions_payload = {}
 
+                normalized_permissions: dict[str, Sequence[str]] | None = None
+                if permissions_payload is not None:
+                    normalized_permissions = {
+                        resource: tuple(actions)
+                        for resource, actions in permissions_payload.items()
+                    }
                 updated_role = service.update_role(
                     target_role_id,
                     role_name=role_name.strip(),
                     description=role_description.strip() if role_description else None,
                     is_active=bool(role_active),
-                    permissions=permissions_payload,
+                    permissions=normalized_permissions,
                 )
 
                 return _snapshot(service), f"Роль «{updated_role.role_name}» обновлена", "success", True, ""

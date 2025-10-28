@@ -7,7 +7,8 @@ from flask import session as flask_session, request
 
 from app.auth.service import AuthService
 from app.core.settings import get_settings
-from app.ui.pages import admin, common, dashboard, login
+from app.ui import reports
+from app.ui.pages import admin, common, library, login
 
 
 def _has_permission(session_data: dict, resource: str, action: str = "read") -> bool:
@@ -29,7 +30,7 @@ def register_routes(app: Dash) -> None:
     """Register page routers and global callbacks."""
 
     login.register_callbacks(app)
-    dashboard.register_callbacks(app)
+    reports.register_all_callbacks(app)
     admin.register_callbacks(app)
     auth_service = AuthService()
 
@@ -39,8 +40,8 @@ def register_routes(app: Dash) -> None:
         Output("nav-links", "style"),
         Output("nav-admin", "style"),
         Output("nav-admin", "disabled"),
-        Output("nav-dashboard", "style"),
-        Output("nav-dashboard", "disabled"),
+        Output("nav-library", "style"),
+        Output("nav-library", "disabled"),
         Output("global-redirect", "pathname", allow_duplicate=True),
         Input("url", "pathname"),
         prevent_initial_call="initial_duplicate",
@@ -53,41 +54,23 @@ def register_routes(app: Dash) -> None:
         nav_links_style = {"display": "none"}
         nav_admin_style = {"display": "none"}
         nav_admin_disabled = True
-        nav_dashboard_style = {"display": "none"}
-        nav_dashboard_disabled = True
+        nav_library_style = {"display": "none"}
+        nav_library_disabled = True
 
         if not user_id:
-            if pathname == "/login":
-                return (
-                    login.layout(),
-                    [],
-                    nav_links_style,
-                    nav_admin_style,
-                    nav_admin_disabled,
-                    nav_dashboard_style,
-                    nav_dashboard_disabled,
-                    no_update,
-                )
-            if pathname == "/":
-                return (
-                    login.layout(),
-                    [],
-                    nav_links_style,
-                    nav_admin_style,
-                    nav_admin_disabled,
-                    nav_dashboard_style,
-                    nav_dashboard_disabled,
-                    no_update,
-                )
+            layout = login.layout()
+            redirect = no_update
+            if pathname not in ("/", "/login"):
+                redirect = "/login"
             return (
-                login.layout(),
+                layout,
                 [],
                 nav_links_style,
                 nav_admin_style,
                 nav_admin_disabled,
-                nav_dashboard_style,
-                nav_dashboard_disabled,
-                "/login",
+                nav_library_style,
+                nav_library_disabled,
+                redirect,
             )
 
         user_display = [
@@ -96,8 +79,9 @@ def register_routes(app: Dash) -> None:
         ]
 
         nav_links_style = None
-        nav_dashboard_style = None
-        nav_dashboard_disabled = False
+        nav_library_style = None
+        nav_library_disabled = False
+
         admin_disabled = not (
             "admin" in (session_data.get("roles") or [])
             or _has_permission(session_data, "admin", "read")
@@ -105,37 +89,48 @@ def register_routes(app: Dash) -> None:
         nav_admin_style = None if not admin_disabled else {"display": "none"}
         nav_admin_disabled = admin_disabled
 
-        if pathname in ("/", "/dashboard"):
-            can_view_dashboard = (
-                _has_permission(session_data, "dashboard", "read")
-                or _can_view_report(session_data, "sales_dashboard")
-                or not admin_disabled
+        def _can_access_report_entry(entry) -> bool:
+            if not admin_disabled:
+                return True
+            if entry.permission_resource and _has_permission(session_data, entry.permission_resource, "read"):
+                return True
+            if entry.code and _can_view_report(session_data, entry.code):
+                return True
+            return False
+
+        if pathname in ("/", "/library"):
+            return (
+                library.layout(session_data),
+                user_display,
+                nav_links_style,
+                nav_admin_style,
+                nav_admin_disabled,
+                nav_library_style,
+                nav_library_disabled,
+                no_update,
             )
-            if not can_view_dashboard:
-                nav_dashboard_style = {"display": "none"}
-                nav_dashboard_disabled = True
-            else:
-                nav_dashboard_style = None
-                nav_dashboard_disabled = False
-            if not can_view_dashboard and admin_disabled:
+
+        report_entry = reports.get_report(pathname)
+        if report_entry:
+            if not _can_access_report_entry(report_entry):
                 return (
                     common.unauthorized_layout(),
                     user_display,
                     nav_links_style,
                     nav_admin_style,
                     nav_admin_disabled,
-                    nav_dashboard_style,
-                    nav_dashboard_disabled,
+                    nav_library_style,
+                    nav_library_disabled,
                     no_update,
                 )
             return (
-                dashboard.layout(),
+                report_entry.layout(),
                 user_display,
                 nav_links_style,
                 nav_admin_style,
                 nav_admin_disabled,
-                nav_dashboard_style,
-                nav_dashboard_disabled,
+                nav_library_style,
+                nav_library_disabled,
                 no_update,
             )
 
@@ -147,8 +142,8 @@ def register_routes(app: Dash) -> None:
                     nav_links_style,
                     nav_admin_style,
                     nav_admin_disabled,
-                    nav_dashboard_style,
-                    nav_dashboard_disabled,
+                    nav_library_style,
+                    nav_library_disabled,
                     no_update,
                 )
             return (
@@ -157,21 +152,21 @@ def register_routes(app: Dash) -> None:
                 nav_links_style,
                 nav_admin_style,
                 nav_admin_disabled,
-                nav_dashboard_style,
-                nav_dashboard_disabled,
+                nav_library_style,
+                nav_library_disabled,
                 no_update,
             )
 
         if pathname == "/login":
             return (
-                dashboard.layout(),
+                library.layout(session_data),
                 user_display,
                 nav_links_style,
                 nav_admin_style,
                 nav_admin_disabled,
-                nav_dashboard_style,
-                nav_dashboard_disabled,
-                "/dashboard",
+                nav_library_style,
+                nav_library_disabled,
+                "/library",
             )
 
         return (
@@ -180,8 +175,8 @@ def register_routes(app: Dash) -> None:
             nav_links_style,
             nav_admin_style,
             nav_admin_disabled,
-            nav_dashboard_style,
-            nav_dashboard_disabled,
+            nav_library_style,
+            nav_library_disabled,
             no_update,
         )
 

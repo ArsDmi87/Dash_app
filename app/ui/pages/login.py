@@ -21,7 +21,7 @@ def _can_access_admin(profile: AuthProfile) -> bool:
 
 
 def _default_redirect(profile: AuthProfile) -> str:
-    return "/admin" if _can_access_admin(profile) else "/dashboard"
+    return "/admin" if _can_access_admin(profile) else "/library"
 
 
 def layout() -> Component:
