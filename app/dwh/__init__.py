@@ -13,6 +13,14 @@ from .product_dynamics import (
     get_product_dynamics_service,
     set_product_dynamics_service,
 )
+from .top_client_activities import (
+    CategoryActivities,
+    ClientActivityDetailRow,
+    ClientActivityRow,
+    TopClientActivitiesService,
+    get_top_client_activities_service,
+    set_top_client_activities_service,
+)
 
 __all__ = [
     "DashboardFiltersSnapshot",
@@ -26,4 +34,10 @@ __all__ = [
     "ProductDynamicsService",
     "get_product_dynamics_service",
     "set_product_dynamics_service",
+    "CategoryActivities",
+    "ClientActivityDetailRow",
+    "ClientActivityRow",
+    "TopClientActivitiesService",
+    "get_top_client_activities_service",
+    "set_top_client_activities_service",
 ]

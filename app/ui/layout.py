@@ -8,13 +8,13 @@ APP_FONT_FAMILY = "'Open Sans'"#, Arial, sans-serif"
 NAVBAR_COLOR = "#55246A"
 FRAME_BORDER_COLOR = "#414042"
 FRAME_STYLE = {
-    "border": f"2px solid {FRAME_BORDER_COLOR}",
+    "border": "none",
     "borderRadius": "24px",
-    "background": "linear-gradient(145deg, #d9dce3, #f0f2f7)",
+    "background": APP_BACKGROUND,
     "padding": "24px",
     "margin": "0 auto",
     "maxWidth": "1280px",
-    "boxShadow": "0 8px 24px rgba(33, 33, 33, 0.08)",
+    "boxShadow": "none",
 }
 
 
@@ -48,16 +48,9 @@ def get_layout():
                 style={
                     "backgroundColor": NAVBAR_COLOR,
                     "borderBottom": f"2px solid {FRAME_BORDER_COLOR}",
-                    "boxShadow": "0 12px 24px rgba(17, 14, 31, 0.28)",
+                    "borderRadius": "24px",
+                        "boxShadow": "0 12px 24px rgba(17, 14, 31, 0.28)",
                 },
-            ),
-            html.Div(
-                [
-                    html.Div(className="header-divider__beam"),
-                    html.Div(className="header-divider__accent"),
-                    html.Div(className="header-divider__accent header-divider__accent--right"),
-                ],
-                className="header-divider",
             ),
             html.Div(
                 dbc.Container(
@@ -70,7 +63,7 @@ def get_layout():
         ],
         style={
             "fontFamily": APP_FONT_FAMILY,
-            "backgroundColor": NAVBAR_COLOR,
+            "backgroundColor": APP_BACKGROUND,
             "minHeight": "100vh",
             "padding": "24px",
         },

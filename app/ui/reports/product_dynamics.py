@@ -74,7 +74,7 @@ def layout() -> Component:
 
     return dbc.Container(
         [
-            html.Div(html.H2("Динамика по продуктам (млн руб.)"), className="report-header"),
+            html.Div(html.H2("Фактические данные(млн руб.)"), className="report-header"),
             dbc.Alert(id="product-dynamics-feedback", is_open=False, color="info", className="mt-3"),
             dbc.Card(
                 dbc.CardBody(
@@ -367,11 +367,11 @@ def register_callbacks(app) -> None:
             except Exception as exc:  # pragma: no cover - runtime diagnostics only
                 logger.exception("Failed to load flows for %s: %s", product, exc)
                 figures.append(_empty_figure("Ошибка загрузки данных"))
-                titles.append(product)
+                titles.append(_normalize_product_title(product))
                 meta.append(product)
                 continue
             figures.append(_build_flow_figure(flows, product))
-            titles.append(product)
+            titles.append(_normalize_product_title(product))
             meta.append(product)
 
         while len(figures) < 4:
@@ -558,7 +558,8 @@ def _build_combined_totals_figure(totals: Iterable[ProductTotals]) -> go.Figure:
         margin=dict(l=110, r=60, t=60, b=30),
         plot_bgcolor=FIGURE_BG_COLOR,
         paper_bgcolor="white",
-        yaxis=dict(title="", automargin=True),
+        yaxis=dict(visible=False, automargin=False),
+        #yaxis=dict(title="", automargin=True),
         showlegend=False,
         font=dict(family="Open Sans, Arial, sans-serif"),
     )
@@ -617,7 +618,7 @@ def _build_flow_figure(flows: ProductFlows, product: str) -> go.Figure:
         for value, label in zip(repaid_values, periods)
     ]
     width = 0.45
-    label_offset = width / 4
+    label_offset = width / 2
     issued_customdata = [
         {"metric": metric, "period": period, "product": product}
         for metric, (period, _) in zip(
@@ -666,7 +667,7 @@ def _build_flow_figure(flows: ProductFlows, product: str) -> go.Figure:
         bargroupgap=0,
         plot_bgcolor=FIGURE_BG_COLOR,
         paper_bgcolor="white",
-        margin=dict(l=30, r=30, t=20, b=30),
+        margin=dict(l=20, r=30, t=20, b=30),
         yaxis=dict(
             showticklabels=False,
             showgrid=False,
@@ -682,8 +683,8 @@ def _build_flow_figure(flows: ProductFlows, product: str) -> go.Figure:
         tickvals=[pos + label_offset for pos in x_positions],
         ticktext=periods,
         tickangle=0,
-    title="",
-        range=[-0.6, len(PERIOD_LABELS) - 0.4],
+   # title="",
+        range=[-0.6, len(PERIOD_LABELS) - 0.2],
     showgrid=False,
     showline=False,
     zeroline=False,
@@ -724,6 +725,15 @@ def _ensure_float(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _normalize_product_title(product: Any) -> str:
+    if not isinstance(product, str):
+        return str(product) if product is not None else "—"
+    trimmed = product.strip()
+    if not trimmed:
+        return "—"
+    return trimmed[0].upper() + trimmed[1:]
 
 
 def _extract_top_product(click_data: Any) -> str | None:
