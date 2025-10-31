@@ -9,6 +9,11 @@ from dash.development.base_component import Component
 from app.ui.reports import iter_reports, ReportEntry
 
 
+EXCLUDED_REPORT_CODES = {
+    "sales_dashboard",
+}
+
+
 def _normalize_actions(raw: Any) -> set[str]:
     if isinstance(raw, str):
         return {raw}
@@ -47,6 +52,9 @@ def layout(session_data: Mapping[str, Any]) -> Component:
     registry_by_route = {entry.route: entry for entry in entries}
     report_items = _normalize_reports(session_data.get("reports"), registry_by_code, registry_by_route)
     report_items = _ensure_registry_coverage(report_items, entries, include_all=_is_admin_user(session_data))
+    filtered_reports = [
+        report for report in report_items if report.code not in EXCLUDED_REPORT_CODES
+    ]
     cards = [
         _render_card(
             title=report.name,
@@ -55,7 +63,7 @@ def layout(session_data: Mapping[str, Any]) -> Component:
             badge=report.code,
             disabled=report.href is None,
         )
-        for report in report_items
+        for report in filtered_reports
     ]
 
     if not cards:
@@ -76,14 +84,7 @@ def layout(session_data: Mapping[str, Any]) -> Component:
         )
 
     return dbc.Container(
-        [
-            html.H2("Мои отчёты"),
-            html.P(
-                "Выберите отчёт или дашборд из списка ниже, чтобы открыть его в новой вкладке приложения.",
-                className="text-muted",
-            ),
-            dbc.Row(cards, className="gy-4"),
-        ],
+        [html.H2("Отчёты корпоративного блока", className="text-white"), dbc.Row(cards, className="gy-4")],
         fluid=True,
         className="py-3",
     )
@@ -172,14 +173,14 @@ def _render_card(title: str, subtitle: str, href: str | None, badge: str, disabl
             [
                 dbc.CardBody(
                     [
-                        dbc.Badge(badge, pill=True, color="secondary", className="mb-2"),
-                        html.H4(title, className="card-title"),
-                        html.P(subtitle or "", className="card-text text-muted"),
+                        dbc.Badge(badge, pill=True, color="secondary", className="mb-2 text-white"),
+                        html.H4(title, className="card-title text-white"),
+                        html.P(subtitle or "", className="card-text text-white"),
                         dbc.Button("Открыть", **button_kwargs),
                     ]
                 )
             ],
-            className="h-100 shadow-sm",
+            className="h-100 shadow-sm text-white",
         ),
         xs=12,
         sm=6,

@@ -1,20 +1,48 @@
 from __future__ import annotations
 
-from dash import dcc, html
 import dash_bootstrap_components as dbc
+from dash import dcc, html
 
-APP_BACKGROUND = "#D5DAE0"
-APP_FONT_FAMILY = "'Open Sans'"#, Arial, sans-serif"
-NAVBAR_COLOR = "#55246A"
-FRAME_BORDER_COLOR = "#414042"
-FRAME_STYLE = {
-    "border": "none",
+APP_FONT_FAMILY = "'Open Sans'"  # , Arial, sans-serif"
+GRADIENT_START = "#000000"
+GRADIENT_END = "rgb(103, 72, 142)"
+NAVBAR_TEXT_COLOR = "#FFFFFF"
+NAVBAR_CUTOFF = "140px"
+DEFAULT_APP_STYLE: dict[str, str] = {
+    "fontFamily": APP_FONT_FAMILY,
+    "minHeight": "100vh",
+    "padding": "24px",
+    "--navbar-cutoff": NAVBAR_CUTOFF,
+    "backgroundColor": GRADIENT_START,
+    "backgroundImage": (
+        "linear-gradient(to bottom, "
+        f"{GRADIENT_START} 0px, "
+        f"{GRADIENT_START} 90px, "
+        "#130925 170px, "
+        "#2f1750 40%, "
+        f"{GRADIENT_END} 100%)"
+    ),
+    "backgroundRepeat": "no-repeat",
+    "backgroundAttachment": "fixed",
+}
+
+DEFAULT_NAVBAR_STYLE: dict[str, str] = {
+    "backgroundColor": "transparent",
+    "borderBottom": "none",
     "borderRadius": "24px",
-    "background": APP_BACKGROUND,
+    "boxShadow": "none",
+    "padding": "0.75rem 1rem",
+}
+
+DEFAULT_FRAME_STYLE: dict[str, str] = {
+    "border": "1px solid rgba(255, 255, 255, 0.12)",
+    "borderRadius": "24px",
+    "background": "rgba(20, 10, 40, 0.45)",
     "padding": "24px",
     "margin": "0 auto",
     "maxWidth": "1280px",
-    "boxShadow": "none",
+    "boxShadow": "0 18px 36px rgba(0, 0, 0, 0.4)",
+    "backdropFilter": "blur(6px)",
 }
 
 
@@ -27,11 +55,25 @@ def get_layout():
             dbc.Navbar(
                 dbc.Container(
                     [
-                        dbc.NavbarBrand("Dash Admin Analytics", href="/"),
+                        dbc.NavbarBrand("NOVIKOM.Analytics", href="/", className="text-white fw-semibold"),
                         dbc.Nav(
                             [
-                                dbc.NavLink("Мои отчёты", href="/library", id="nav-library", active="exact"),
-                                dbc.NavLink("Админка", href="/admin", id="nav-admin", disabled=True, style={"display": "none"}),
+                                dbc.NavLink(
+                                    "Отчёты",
+                                    href="/library",
+                                    id="nav-library",
+                                    active="exact",
+                                    className="navbar-link",
+                                    style={"color": NAVBAR_TEXT_COLOR},
+                                ),
+                                dbc.NavLink(
+                                    "Админка",
+                                    href="/admin",
+                                    id="nav-admin",
+                                    disabled=True,
+                                    className="navbar-link",
+                                    style={"display": "none", "color": NAVBAR_TEXT_COLOR},
+                                ),
                             ],
                             className="me-auto",
                             pills=True,
@@ -42,29 +84,21 @@ def get_layout():
                     ],
                     fluid=True,
                 ),
-                color=NAVBAR_COLOR,
+                id="main-navbar",
                 dark=True,
-                className="mb-4 border-0",
-                style={
-                    "backgroundColor": NAVBAR_COLOR,
-                    "borderBottom": f"2px solid {FRAME_BORDER_COLOR}",
-                    "borderRadius": "24px",
-                        "boxShadow": "0 12px 24px rgba(17, 14, 31, 0.28)",
-                },
+                className="main-navbar mb-4 border-0",
+                style=DEFAULT_NAVBAR_STYLE.copy(),
             ),
             html.Div(
                 dbc.Container(
                     html.Div(id="page-content"),
                     fluid=True,
                 ),
+                id="page-frame",
                 className="px-3",
-                style=FRAME_STYLE,
+                style=DEFAULT_FRAME_STYLE.copy(),
             ),
         ],
-        style={
-            "fontFamily": APP_FONT_FAMILY,
-            "backgroundColor": APP_BACKGROUND,
-            "minHeight": "100vh",
-            "padding": "24px",
-        },
+        id="app-root",
+        style=DEFAULT_APP_STYLE.copy(),
     )

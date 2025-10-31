@@ -1,0 +1,115 @@
+.navbar-link {
+  color: #FFFFFF !important;
+  border-radius: 999px !important;
+}
+
+.navbar-link:hover {
+  color: #FFFFFF !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.navbar-link.active {
+  color: #FFFFFF !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.main-navbar {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.bg-light {
+  --bs-bg-opacity: 0 !important;
+  background-color: transparent !important;
+}
+
+.bg-light .navbar-nav .nav-link,
+.bg-light .navbar-brand {
+  color: #FFFFFF !important;
+}
+
+.report-product-dynamics .filter-card.card {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.report-product-dynamics .chart-card.card {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+.report-product-dynamics .graph-panel {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.report-product-dynamics .filter-card .card-body,
+.report-product-dynamics .chart-card .card-body {
+  background-color: transparent !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-control,
+.report-product-dynamics .report-dynamics-dropdown .Select-value,
+.report-product-dynamics .report-dynamics-dropdown .Select-value-label,
+.report-product-dynamics .report-dynamics-dropdown .Select-placeholder {
+  color: #FFFFFF !important;
+  background-color: transparent !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-control {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: none !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-menu-outer {
+  background-color: rgba(20, 10, 40, 0.45) !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-option {
+  color: #FFFFFF !important;
+  background-color: transparent !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-option.is-focused,
+.report-product-dynamics .report-dynamics-dropdown .Select-option.is-selected {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  color: #FFFFFF !important;
+}
+
+.report-product-dynamics .panel-title {
+  background-color: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
+  padding: 0 !important;
+  margin-bottom: 16px !important;
+}
+
+.report-product-dynamics .chart-title {
+  background-color: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  padding: 0 !important;
+  margin-bottom: 24px !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+}
+
+.report-product-dynamics .flow-section-title {
+  background-color: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  padding: 0 !important;
+  margin-bottom: 24px !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+}

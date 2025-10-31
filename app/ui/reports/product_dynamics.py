@@ -19,19 +19,36 @@ from .registry import ReportEntry, add_report
 
 logger = logging.getLogger(__name__)
 
-FIGURE_BG_COLOR = "#ffffff"
+FIGURE_BG_COLOR = "rgba(0, 0, 0, 0)"
 ALL_DEPARTMENTS_VALUE = "__all__"
 TOP_BAR_COLOR = "#644F94"
 FLOW_POSITIVE_COLOR = "#57b26a"
 FLOW_NEGATIVE_COLOR = "#d85756"
-SPINNER_COLOR = "#55246A"
+SPINNER_COLOR = "#FFFFFF"
 PANEL_BORDER_RADIUS = "18px"
+CARD_BORDER_COLOR = "#FFFFFF"
+CHART_CARD_STYLE = {
+    "backgroundColor": "transparent",
+    "borderRadius": "24px",
+    "border": f"1px solid {CARD_BORDER_COLOR}",
+    "boxShadow": "none",
+}
+TRANSPARENT_CARD_BODY_STYLE = {
+    "backgroundColor": "transparent",
+    "borderRadius": "22px",
+}
+FILTER_CARD_STYLE = {
+    "backgroundColor": "transparent",
+    "borderRadius": "24px",
+    "border": "none",
+    "boxShadow": "none",
+}
 PANEL_STYLE = {
-    "backgroundColor": "#ffffff",
+    "backgroundColor": "transparent",
     "borderRadius": PANEL_BORDER_RADIUS,
     "padding": "18px",
-    "border": "2px solid #414042",
-    "boxShadow": "0 6px 16px rgba(33, 41, 63, 0.08)",
+    "border": "none",
+    "boxShadow": "none",
 }
 
 DELTA_DIVIDER_COLOR = "#3E3861"
@@ -74,7 +91,6 @@ def layout() -> Component:
 
     return dbc.Container(
         [
-            html.Div(html.H2("Фактические данные(млн руб.)"), className="report-header"),
             dbc.Alert(id="product-dynamics-feedback", is_open=False, color="info", className="mt-3"),
             dbc.Card(
                 dbc.CardBody(
@@ -82,14 +98,15 @@ def layout() -> Component:
                         [
                             dbc.Col(
                                 [
-                                    dbc.Label("Департамент"),
+                                    dbc.Label("Департамент", className="text-white"),
                                     dcc.Dropdown(
                                         id="product-dynamics-department-filter",
                                         options=department_options,
                                         value=department_value,
                                         placeholder="Выберите департамент",
                                         clearable=False,
-                                        className="w-100",
+                                        className="w-100 report-dynamics-dropdown",
+                                        style={"backgroundColor": "transparent", "color": "#FFFFFF"},
                                     ),
                                 ],
                                 xs=12,
@@ -97,15 +114,17 @@ def layout() -> Component:
                             ),
                         ],
                         className="gy-3",
-                    )
+                    ),
+                style=TRANSPARENT_CARD_BODY_STYLE.copy(),
                 ),
-                className="mt-3 filter-card shadow-sm border-0",
+                className="mt-3 filter-card",
+                style=FILTER_CARD_STYLE.copy(),
             ),
             dbc.Card(
                 dbc.CardBody(
                     html.Div(
                         [
-                            html.Div(html.H4("Остатки по продуктам", className="mb-0"), className="chart-title"),
+                            html.Div(html.H4("Оперативные данные по продуктам", className="mb-0"), className="chart-title"),
                             dcc.Loading(
                                 dcc.Graph(
                                     id="product-dynamics-top-chart",
@@ -117,9 +136,11 @@ def layout() -> Component:
                             ),
                         ],
                         className="graph-panel",
-                    )
+                    ),
+                    style=TRANSPARENT_CARD_BODY_STYLE.copy(),
                 ),
-                className="mt-3 chart-card shadow-sm border-0",
+                className="mt-3 chart-card",
+                style=CHART_CARD_STYLE.copy(),
             ),
             dbc.Card(
                 dbc.CardBody(
@@ -241,9 +262,11 @@ def layout() -> Component:
                             ],
                             className="gy-4",
                         ),
-                    ]
+                    ],
+                    style=TRANSPARENT_CARD_BODY_STYLE.copy(),
                 ),
-                className="mt-4 chart-card shadow-sm border-0",
+                className="mt-4 chart-card",
+                style=CHART_CARD_STYLE.copy(),
             ),
             dbc.Modal(
                 [
@@ -255,9 +278,41 @@ def layout() -> Component:
                                 data=[],
                                 columns=DETAIL_COLUMNS,
                                 page_size=15,
-                                style_table={"overflowX": "auto"},
-                                style_cell={"textAlign": "left", "whiteSpace": "normal"},
-                                style_header={"fontWeight": "bold"},
+                                style_table={"overflowX": "auto", "backgroundColor": "transparent"},
+                                style_cell={
+                                    "textAlign": "left",
+                                    "whiteSpace": "normal",
+                                    "color": "#FFFFFF",
+                                    "backgroundColor": "transparent",
+                                    "border": "none",
+                                    "fontWeight": 300,
+                                },
+                                style_header={
+                                    "fontWeight": "bold",
+                                    "backgroundColor": "transparent",
+                                    "color": "#FFFFFF",
+                                    "border": "none",
+                                    "borderBottom": "1px solid rgba(255, 255, 255, 0.2)",
+                                },
+                                style_data={
+                                    "borderBottom": "1px solid rgba(255, 255, 255, 0.12)",
+                                    "borderTop": "none",
+                                    "borderLeft": "none",
+                                    "borderRight": "none",
+                                },
+                                style_data_conditional=[
+                                    {
+                                        "if": {"state": "selected"},
+                                        "backgroundColor": "rgba(255, 255, 255, 0.2)",
+                                        "color": "#FFFFFF",
+                                    },
+                                    {
+                                        "if": {"state": "active"},
+                                        "backgroundColor": "rgba(255, 255, 255, 0.16)",
+                                        "color": "#FFFFFF",
+                                    },
+                                    {"if": {"row_index": "last"}, "borderBottom": "none"},
+                                ],
                             ),
                             className="modal-table-wrapper",
                         )
@@ -269,11 +324,12 @@ def layout() -> Component:
                 id="product-dynamics-detail-modal",
                 is_open=False,
                 size="xl",
+                centered=True,
             ),
             dcc.Store(id="product-dynamics-flow-products", data=[]),
         ],
         fluid=True,
-        className="gy-4",
+        className="report-product-dynamics gy-4",
         style={"fontFamily": "'Open Sans', Arial, sans-serif"},
     )
 
@@ -469,6 +525,7 @@ def _build_combined_totals_figure(totals: Iterable[ProductTotals]) -> go.Figure:
         return _empty_figure("Нет данных для отображения")
 
     products = [row.product for row in rows]
+    display_products = [_normalize_product_title(p) for p in products]
     balances = [row.ending_balance for row in rows]
     text_values = [_format_number(value) for value in balances]
     hover_texts = [f"{product}: {text_values[i]} млн руб." for i, product in enumerate(products)]
@@ -488,8 +545,8 @@ def _build_combined_totals_figure(totals: Iterable[ProductTotals]) -> go.Figure:
             y=products,
             orientation="h",
             text=text_values,
-            textposition="auto",
-            textfont=dict(size=15, family="Open Sans, Arial, sans-serif"),
+            textposition="inside",
+            textfont=dict(size=15, color="#FFFFFF", family="Open Sans, Arial, sans-serif"),
             marker_color=TOP_BAR_COLOR,
             hovertext=hover_texts,
             hovertemplate="%{hovertext}<extra></extra>",
@@ -519,7 +576,7 @@ def _build_combined_totals_figure(totals: Iterable[ProductTotals]) -> go.Figure:
                 mode="text",
                 text=texts,
                 textposition="middle center",
-                textfont=dict(size=16, family="Open Sans, Arial, sans-serif"),
+                textfont=dict(size=16, color="#FFFFFF", family="Open Sans, Arial, sans-serif"),
                 hovertext=hovers,
                 hovertemplate="%{hovertext}<extra></extra>",
                 showlegend=False,
@@ -534,32 +591,16 @@ def _build_combined_totals_figure(totals: Iterable[ProductTotals]) -> go.Figure:
             yref="paper",
             text=label,
             showarrow=False,
-            font=dict(size=16, color="#212529", family="Open Sans, Arial, sans-serif"),
+            font=dict(size=16, color="#FFFFFF", family="Open Sans, Arial, sans-serif"),
             xanchor="left",
             align="left",
-        )
-
-    # Draw separators around the delta columns to mimic the mock-up layout.
-    boundary_positions = [-0.5] + [i + 0.5 for i in range(len(delta_specs))]
-    for pos in boundary_positions[:-1]:
-        fig.add_shape(
-            type="line",
-            x0=pos,
-            x1=pos,
-            xref="x2",
-            y0=0,
-            y1=1,
-            yref="paper",
-            line=dict(color=DELTA_DIVIDER_COLOR, width=1.5),
         )
 
     fig.update_layout(
         height=max(320, 75 * len(rows)),
         margin=dict(l=110, r=60, t=60, b=30),
         plot_bgcolor=FIGURE_BG_COLOR,
-        paper_bgcolor="white",
-        yaxis=dict(visible=False, automargin=False),
-        #yaxis=dict(title="", automargin=True),
+        paper_bgcolor=FIGURE_BG_COLOR,
         showlegend=False,
         font=dict(family="Open Sans, Arial, sans-serif"),
     )
@@ -576,22 +617,42 @@ def _build_combined_totals_figure(totals: Iterable[ProductTotals]) -> go.Figure:
         col=2,
         range=[-0.5, len(delta_specs) - 0.5],
         visible=False,
-        showgrid=False,
         zeroline=False,
+        showline=False,
+        showgrid=False,
     )
-    fig.update_yaxes(row=1, col=1, automargin=True, autorange="reversed")
-    fig.update_yaxes(row=1, col=2, showticklabels=False, autorange="reversed")
+    fig.update_yaxes(
+        row=1,
+        col=1,
+        automargin=True,
+        autorange="reversed",
+        visible=True,
+        tickmode="array",
+        ticklen=5,
+        ticklabelstandoff=20,
+        tickvals=products,
+        ticktext=display_products,
+        tickfont=dict(color="#FFFFFF", size=18, family="Open Sans, Arial, sans-serif"),
+    )
+    fig.update_yaxes(
+        row=1,
+        col=2,
+        showticklabels=False,
+        autorange="reversed",
+        showgrid=False,
+        gridcolor="rgba(0,0,0,0)",
+    )
     return fig
 
 
 def _format_delta_html(value: float) -> str:
-    color = "#2e7d32" if value >= 0 else "#c62828"
+    arrow_color = "#2e7d32" if value >= 0 else "#c62828"
     arrow = "▲" if value >= 0 else "▼"
     sign = "+" if value >= 0 else "-"
     formatted = _format_number(abs(value)).replace(" ", "&nbsp;")
     return (
-        f"<span style='color:{color}; font-weight:600'>{arrow}</span>"
-        f"&nbsp;<span style='color:{color}'>{sign}&nbsp;{formatted}</span>"
+        f"<span style='color:{arrow_color}; font-weight:600'>{arrow}</span>"
+        f"&nbsp;<span style='color:#FFFFFF'>{sign}&nbsp;{formatted}</span>"
     )
 
 def _build_flow_figure(flows: ProductFlows, product: str) -> go.Figure:
@@ -603,12 +664,14 @@ def _build_flow_figure(flows: ProductFlows, product: str) -> go.Figure:
         flows.issued_quarter,
         flows.issued_year,
     ]
+    issued_texts = [_format_flow_label(value) for value in issued_values]
     repaid_values = [
         -flows.repaid_day,
         -flows.repaid_week,
         -flows.repaid_quarter,
         -flows.repaid_year,
     ]
+    repaid_texts = [_format_flow_label(value) for value in repaid_values]
     issued_hovers = [
         f"{label}: {_format_number(value)} млн руб."
         for value, label in zip(issued_values, periods)
@@ -638,25 +701,33 @@ def _build_flow_figure(flows: ProductFlows, product: str) -> go.Figure:
                 x=x_positions,
                 y=issued_values,
                 name="Выдано",
-                marker_color=FLOW_POSITIVE_COLOR,
+                marker=dict(color=FLOW_POSITIVE_COLOR, line=dict(width=0)),
                 customdata=issued_customdata,
                 hovertext=issued_hovers,
                 hovertemplate="%{hovertext}<extra></extra>",
                 offset=-width / 2,
                 width=width,
                 cliponaxis=False,
+                text=issued_texts,
+                textposition="outside",
+                texttemplate="%{text}",
+                textfont=dict(color="#FFFFFF", size=13),
             ),
             go.Bar(
                 x=x_positions,
                 y=repaid_values,
                 name="Погашено",
-                marker_color=FLOW_NEGATIVE_COLOR,
+                marker=dict(color=FLOW_NEGATIVE_COLOR, line=dict(width=0)),
                 customdata=repaid_customdata,
                 hovertext=repaid_hovers,
                 hovertemplate="%{hovertext}<extra></extra>",
                 offset=width / 2,
                 width=width,
                 cliponaxis=False,
+                text=repaid_texts,
+                textposition="outside",
+                texttemplate="%{text}",
+                textfont=dict(color="#FFFFFF", size=13),
             ),
         ]
     )
@@ -666,7 +737,7 @@ def _build_flow_figure(flows: ProductFlows, product: str) -> go.Figure:
         bargap=0.6,
         bargroupgap=0,
         plot_bgcolor=FIGURE_BG_COLOR,
-        paper_bgcolor="white",
+        paper_bgcolor=FIGURE_BG_COLOR,
         margin=dict(l=20, r=30, t=20, b=30),
         yaxis=dict(
             showticklabels=False,
@@ -685,6 +756,7 @@ def _build_flow_figure(flows: ProductFlows, product: str) -> go.Figure:
         tickangle=0,
    # title="",
         range=[-0.6, len(PERIOD_LABELS) - 0.2],
+    tickfont=dict(color="#FFFFFF"),
     showgrid=False,
     showline=False,
     zeroline=False,
@@ -697,12 +769,24 @@ def _format_number(value: float) -> str:
     return f"{value:,.0f}".replace(",", " ")
 
 
+def _format_flow_label(value: float) -> str:
+    scaled = value / 1000.0
+    abs_scaled = abs(scaled)
+    if abs_scaled >= 100:
+        formatted = f"{scaled:,.0f}"
+    elif abs_scaled >= 10:
+        formatted = f"{scaled:,.1f}"
+    else:
+        formatted = f"{scaled:,.2f}"
+    return formatted.replace(",", " ")
+
+
 def _empty_figure(message: str) -> go.Figure:
     figure = go.Figure()
     figure.update_layout(
         margin=dict(l=40, r=40, t=40, b=40),
         plot_bgcolor=FIGURE_BG_COLOR,
-        paper_bgcolor="white",
+        paper_bgcolor=FIGURE_BG_COLOR,
         xaxis=dict(visible=False),
         yaxis=dict(visible=False),
         annotations=[
@@ -816,6 +900,6 @@ add_report(
         route="/reports/product-dynamics",
         layout=layout,
         register_callbacks=register_callbacks,
-        description="Остатки и динамика выдач по продуктам.",
+        description="Оперативные данные и динамика выдач / погашений по продуктам.",
     )
 )

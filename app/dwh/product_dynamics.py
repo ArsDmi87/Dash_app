@@ -190,6 +190,105 @@ class ProductDynamicsService:
             repaid_year=_to_float(row.get("repaid_year")),
         )
 
+    def aggregate_region_totals(
+        self,
+        *,
+        product: str | None = None,
+    ) -> list[dict[str, Any]]:
+        where, bound = self._build_filters(product=product)
+        sql = text(
+            'SELECT\n'
+            '    "reg_auto_code" AS reg_auto_code,\n'
+            '    MAX("Регион") AS region_name,\n'
+            '    COALESCE(SUM("Сумма сделки, млн руб#"), 0) AS total_amount\n'
+            f"FROM {self.qualified_table} {where}\n"
+            'GROUP BY "reg_auto_code"\n'
+            'ORDER BY "reg_auto_code"'
+        )
+        stmt = self._apply_expanding_params(sql, bound)
+        with self._session_scope() as session:
+            rows = session.execute(stmt, bound).mappings().all()
+        totals: list[dict[str, Any]] = []
+        for row in rows:
+            code = _ensure_str_or_none(row.get("reg_auto_code"))
+            if not code:
+                continue
+            totals.append(
+                {
+                    "code": code.strip(),
+                    "name": _ensure_str_or_none(row.get("region_name")),
+                    "total_amount": _to_float(row.get("total_amount")),
+                }
+            )
+        return totals
+
+    def aggregate_product_amounts(
+        self,
+        *,
+        product: str | None = None,
+        region_code: str | None = None,
+        region_name: str | None = None,
+    ) -> list[dict[str, Any]]:
+        where, bound = self._build_filters(product=product, region_code=region_code, region_name=region_name)
+        sql = text(
+            'SELECT "Продукт" AS product, COALESCE(SUM("Сумма сделки, млн руб#"), 0) AS total_amount\n'
+            f"FROM {self.qualified_table} {where}\n"
+            'GROUP BY "Продукт"\n'
+            'ORDER BY total_amount DESC'
+        )
+        stmt = self._apply_expanding_params(sql, bound)
+        with self._session_scope() as session:
+            rows = session.execute(stmt, bound).mappings().all()
+        totals: list[dict[str, Any]] = []
+        for row in rows:
+            product_name = _ensure_str_or_none(row.get("product"))
+            if not product_name:
+                continue
+            totals.append(
+                {
+                    "product": product_name,
+                    "total_amount": _to_float(row.get("total_amount")),
+                }
+            )
+        return totals
+
+    def top_deals(
+        self,
+        *,
+        product: str | None = None,
+        region_code: str | None = None,
+        region_name: str | None = None,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        where, bound = self._build_filters(product=product, region_code=region_code, region_name=region_name)
+        bound["limit"] = max(int(limit), 1)
+        amount_condition = '"Сумма сделки, млн руб#" IS NOT NULL'
+        if where:
+            where_clause = f"{where} AND {amount_condition}"
+        else:
+            where_clause = f"WHERE {amount_condition}"
+        sql = text(
+            'SELECT "Клиент" AS client, "Продукт" AS product, "Сумма сделки, млн руб#" AS amount\n'
+            f"FROM {self.qualified_table} {where_clause}\n"
+            'ORDER BY "Сумма сделки, млн руб#" DESC\n'
+            "LIMIT :limit"
+        )
+        stmt = self._apply_expanding_params(sql, bound)
+        with self._session_scope() as session:
+            rows = session.execute(stmt, bound).mappings().all()
+        deals: list[dict[str, Any]] = []
+        for row in rows:
+            amount = _to_float(row.get("amount"))
+            client = _ensure_str_or_none(row.get("client")) or "—"
+            deals.append(
+                {
+                    "client": client,
+                    "amount": amount,
+                    "product": _ensure_str_or_none(row.get("product")),
+                }
+            )
+        return deals
+
     def fetch_details(
         self,
         metric_key: str,
@@ -235,6 +334,8 @@ class ProductDynamicsService:
         *,
         departments: Sequence[str] | None = None,
         product: str | None = None,
+        region_code: str | None = None,
+        region_name: str | None = None,
     ) -> tuple[str, dict[str, Any]]:
         conditions: list[str] = []
         bound: dict[str, Any] = {}
@@ -247,6 +348,14 @@ class ProductDynamicsService:
         if product and isinstance(product, str) and product.strip():
             conditions.append('"Продукт" = :product')
             bound["product"] = product
+
+        if region_code and isinstance(region_code, str) and region_code.strip():
+            trimmed = region_code.strip()
+            conditions.append('CAST("reg_auto_code" AS TEXT) = :region_code')
+            bound["region_code"] = trimmed
+        elif region_name and isinstance(region_name, str) and region_name.strip():
+            conditions.append('"Регион" = :region_name')
+            bound["region_name"] = region_name.strip()
 
         where = ""
         if conditions:

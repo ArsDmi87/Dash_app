@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+import dash_bootstrap_components as dbc
 from dash import Dash, Input, Output, html, no_update
 from dash.exceptions import PreventUpdate
-import dash_bootstrap_components as dbc
 from flask import session as flask_session, request
 
 from app.auth.service import AuthService
 from app.core.settings import get_settings
 from app.ui import reports
+from app.ui.layout import (
+    DEFAULT_APP_STYLE,
+    DEFAULT_FRAME_STYLE,
+    DEFAULT_NAVBAR_STYLE,
+    NAVBAR_TEXT_COLOR,
+)
 from app.ui.pages import admin, common, library, login
 
 
@@ -43,16 +49,24 @@ def register_routes(app: Dash) -> None:
         Output("nav-library", "style"),
         Output("nav-library", "disabled"),
         Output("global-redirect", "pathname", allow_duplicate=True),
+        Output("app-root", "style"),
+        Output("main-navbar", "style"),
+        Output("page-frame", "style"),
         Input("url", "pathname"),
         prevent_initial_call="initial_duplicate",
     )
     def render_page(pathname: str | None):
         pathname = pathname or "/"
+
+        app_style = DEFAULT_APP_STYLE.copy()
+        navbar_style = DEFAULT_NAVBAR_STYLE.copy()
+        frame_style = DEFAULT_FRAME_STYLE.copy()
+
         session_data = dict(flask_session)
         user_id = session_data.get("user_id")
 
         nav_links_style = {"display": "none"}
-        nav_admin_style = {"display": "none"}
+        nav_admin_style = {"display": "none", "color": NAVBAR_TEXT_COLOR}
         nav_admin_disabled = True
         nav_library_style = {"display": "none"}
         nav_library_disabled = True
@@ -71,6 +85,9 @@ def register_routes(app: Dash) -> None:
                 nav_library_style,
                 nav_library_disabled,
                 redirect,
+                app_style,
+                navbar_style,
+                frame_style,
             )
 
         user_display = [
@@ -78,15 +95,15 @@ def register_routes(app: Dash) -> None:
             dbc.Button("Выйти", id="logout-button", color="outline-light", size="sm"),
         ]
 
-        nav_links_style = None
-        nav_library_style = None
+        nav_links_style = {"display": "flex", "alignItems": "center", "gap": "0.75rem"}
+        nav_library_style = {"color": NAVBAR_TEXT_COLOR}
         nav_library_disabled = False
 
         admin_disabled = not (
             "admin" in (session_data.get("roles") or [])
             or _has_permission(session_data, "admin", "read")
         )
-        nav_admin_style = None if not admin_disabled else {"display": "none"}
+        nav_admin_style = {"color": NAVBAR_TEXT_COLOR} if not admin_disabled else {"display": "none", "color": NAVBAR_TEXT_COLOR}
         nav_admin_disabled = admin_disabled
 
         def _can_access_report_entry(entry) -> bool:
@@ -108,6 +125,9 @@ def register_routes(app: Dash) -> None:
                 nav_library_style,
                 nav_library_disabled,
                 no_update,
+                app_style,
+                navbar_style,
+                frame_style,
             )
 
         report_entry = reports.get_report(pathname)
@@ -122,6 +142,9 @@ def register_routes(app: Dash) -> None:
                     nav_library_style,
                     nav_library_disabled,
                     no_update,
+                    app_style,
+                    navbar_style,
+                    frame_style,
                 )
             return (
                 report_entry.layout(),
@@ -132,6 +155,9 @@ def register_routes(app: Dash) -> None:
                 nav_library_style,
                 nav_library_disabled,
                 no_update,
+                app_style,
+                navbar_style,
+                frame_style,
             )
 
         if pathname == "/admin":
@@ -145,6 +171,9 @@ def register_routes(app: Dash) -> None:
                     nav_library_style,
                     nav_library_disabled,
                     no_update,
+                    app_style,
+                    navbar_style,
+                    frame_style,
                 )
             return (
                 admin.layout(),
@@ -155,6 +184,9 @@ def register_routes(app: Dash) -> None:
                 nav_library_style,
                 nav_library_disabled,
                 no_update,
+                app_style,
+                navbar_style,
+                frame_style,
             )
 
         if pathname == "/login":
@@ -167,6 +199,9 @@ def register_routes(app: Dash) -> None:
                 nav_library_style,
                 nav_library_disabled,
                 "/library",
+                app_style,
+                navbar_style,
+                frame_style,
             )
 
         return (
@@ -178,6 +213,9 @@ def register_routes(app: Dash) -> None:
             nav_library_style,
             nav_library_disabled,
             no_update,
+            app_style,
+            navbar_style,
+            frame_style,
         )
 
     @app.callback(

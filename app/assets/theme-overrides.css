@@ -15,17 +15,18 @@ body {
 
 .report-header {
   display: inline-block;
-  padding: 18px 28px;
+  padding: 12px 20px;
   margin-bottom: 12px;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(85, 36, 106, 0.18), rgba(85, 36, 106, 0.05));
-  color: var(--brand-purple);
-  box-shadow: 0 10px 24px rgba(33, 41, 63, 0.12);
+  background: transparent;
+  color: #FFFFFF;
+  box-shadow: none;
 }
 
 .report-header h2 {
   margin: 0;
   font-weight: 600;
+  font-size: 28px;
 }
 
 .chart-title {
@@ -35,6 +36,7 @@ body {
   background-color: var(--brand-purple);
   color: #ffffff;
   font-weight: 600;
+  font-size: 28px;
   margin-bottom: 16px;
 }
 
@@ -45,6 +47,7 @@ body {
   background-color: var(--brand-purple);
   color: #ffffff;
   font-weight: 600;
+  font-size: 28px;
   margin-bottom: 20px;
 }
 
@@ -53,8 +56,9 @@ body {
   padding: 12px 20px;
   border-radius: 16px;
   background: linear-gradient(135deg, rgba(85, 36, 106, 0.12), rgba(85, 36, 106, 0));
-  color: var(--brand-purple);
+  color: #FFFFFF;
   font-weight: 600;
+  font-size: 28px;
 }
 
 .filter-card.card {
@@ -65,7 +69,7 @@ body {
 }
 
 .filter-card .card-body {
-  background: linear-gradient(140deg, var(--soft-purple), rgba(255, 255, 255, 0.92));
+  background: transparent !important;
   border-radius: 18px;
 }
 
@@ -90,6 +94,7 @@ body {
   padding: 8px 14px;
   border-radius: 16px;
   font-weight: 600;
+  font-size: 28px;
   font-size: 14px;
   line-height: 1.2;
   min-height: 40px;
@@ -104,6 +109,7 @@ body {
   border-radius: 16px 16px 0 0;
   padding: 12px 20px;
   font-weight: 600;
+  font-size: 28px;
   color: var(--text-muted);
 }
 
@@ -136,7 +142,7 @@ body {
 .btn-secondary {
   background-color: var(--soft-purple);
   border-color: var(--soft-purple);
-  color: var(--brand-purple);
+  color: #FFFFFF;
 }
 
 .btn-secondary:hover,
@@ -146,7 +152,7 @@ body {
 .show > .btn-secondary.dropdown-toggle {
   background-color: rgba(85, 36, 106, 0.24);
   border-color: rgba(85, 36, 106, 0.24);
-  color: var(--brand-purple);
+  color: #FFFFFF;
 }
 
 .btn:focus {
@@ -155,7 +161,7 @@ body {
 
 .badge-brand,
 .form-label {
-  color: var(--brand-purple);
+  color: #FFFFFF;
 }
 
 .dash-table-container .dash-spreadsheet-container {
@@ -165,7 +171,7 @@ body {
 }
 
 .dash-spinner .spinner-border {
-  color: var(--brand-purple);
+  color: #FFFFFF;
   border-width: 0.35rem;
 }
 
@@ -187,33 +193,42 @@ body {
 
 
 .modal-content {
-  background: var(--page-bg);
+  background: linear-gradient(
+    to bottom,
+    #000000 0%,
+    #000000 90px,
+    #130925 170px,
+    #2f1750 40%,
+    rgb(103, 72, 142) 100%
+  );
   border-radius: 22px;
-  border: 2px solid var(--accent-border);
-  box-shadow: 0 18px 40px rgba(33, 41, 63, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
   font-family: 'Open Sans', Arial, sans-serif;
+  backdrop-filter: blur(18px);
 }
 
 .modal-header,
 .modal-footer {
-  border-color: rgba(65, 64, 66, 0.45);
-  background: linear-gradient(135deg, rgba(85, 36, 106, 0.16), rgba(85, 36, 106, 0.05));
-  color: var(--brand-purple);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: #FFFFFF;
 }
 
 .modal-title {
-  font-weight: 600;
+  font-weight: 500;
+  color: #FFFFFF;
 }
 
 .modal-body {
-  background: linear-gradient(140deg, rgba(241, 236, 250, 0.88), rgba(255, 255, 255, 0.95));
+  background: transparent;
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
 }
 
 .modal-table-wrapper {
-  background: #ffffff;
-  border: 1px solid #ebecef;
+  background: transparent;
+  border: none;
   border-radius: 0;
   padding: 0;
   box-shadow: none;
@@ -222,28 +237,161 @@ body {
 
 .modal-table-wrapper .dash-table-container .dash-spreadsheet-container {
   border-radius: 0;
-  border: 1px solid #f2f2f5;
+  border: none;
   box-shadow: none;
-  background-color: #ffffff;
+  background-color: transparent;
 }
 
+
+.modal-table-wrapper .dash-table-container .dash-spreadsheet tr:hover td {
+  background-color: rgba(255, 255, 255, 0.16) !important;
+  color: #FFFFFF !important;
+}
+
+.modal-table-wrapper .dash-table-container .dash-table-cell--selected,
+.modal-table-wrapper .dash-table-container .dash-spreadsheet td.is-selected {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
 .modal-table-wrapper .dash-table-container .dash-spreadsheet td {
   font-family: 'Open Sans Light', 'Open Sans', Arial, sans-serif;
   font-weight: 300;
   font-size: 15px;
-  color: #1f1f1f;
-  background-color: #ffffff;
+  color: #FFFFFF !important;
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .modal-table-wrapper .dash-table-container .dash-spreadsheet th {
   font-family: 'Open Sans', Arial, sans-serif;
   font-weight: 700;
   font-size: 15px;
-  background: #55246A;
-  background-color: #55246A !important;
-  color: #ffffff;
+  background: transparent !important;
+  color: #FFFFFF !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 .modal-table-wrapper .dash-table-container .dash-spreadsheet tr:nth-child(even) td {
-  background-color: rgba(240, 242, 248, 0.72);
+  background-color: transparent !important;
+}
+
+.navbar-link {
+  color: #FFFFFF !important;
+  border-radius: 999px !important;
+}
+
+.navbar-link:hover {
+  color: #FFFFFF !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.navbar-link.active {
+  color: #FFFFFF !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.main-navbar {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.bg-light {
+  --bs-bg-opacity: 0 !important;
+  background-color: transparent !important;
+}
+
+.bg-light .navbar-nav .nav-link,
+.bg-light .navbar-brand {
+  color: #FFFFFF !important;
+}
+
+.report-product-dynamics .filter-card.card {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.report-product-dynamics .chart-card.card {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+.report-product-dynamics .graph-panel {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.report-product-dynamics .filter-card .card-body,
+.report-product-dynamics .chart-card .card-body {
+  background-color: transparent !important;
+}
+
+.report-product-dynamics .panel-title {
+  background-color: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
+  padding: 0 !important;
+  margin-bottom: 16px !important;
+}
+
+.report-product-dynamics .chart-title {
+  background-color: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  padding: 0 !important;
+  margin-bottom: 24px !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+}
+
+.report-product-dynamics .flow-section-title {
+  background-color: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  padding: 0 !important;
+  margin-bottom: 24px !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-control,
+.report-product-dynamics .report-dynamics-dropdown .Select-value,
+.report-product-dynamics .report-dynamics-dropdown .Select-value-label,
+.report-product-dynamics .report-dynamics-dropdown .Select-placeholder {
+  color: #FFFFFF !important;
+  background-color: transparent !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-control {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: none !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-menu-outer {
+  background-color: rgba(12, 6, 24, 0.85) !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-option {
+  color: #FFFFFF !important;
+  background-color: transparent !important;
+}
+
+.report-product-dynamics .report-dynamics-dropdown .Select-option.is-focused,
+.report-product-dynamics .report-dynamics-dropdown .Select-option.is-selected {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  color: #FFFFFF !important;
+}
+
+.modal-table-wrapper .dash-table-container .dash-spreadsheet-inner table {
+  --hover: rgba(255, 255, 255, 0.16) !important;
+  --selected-background: rgba(255, 255, 255, 0.2) !important;
 }
