@@ -20,7 +20,7 @@ from .registry import ReportEntry, add_report
 logger = logging.getLogger(__name__)
 
 FIGURE_BG_COLOR = "rgba(0, 0, 0, 0)"
-SPINNER_COLOR = "#55246A"
+SPINNER_COLOR = "#FFFFFF"
 BAR_COLOR_POSITIVE = "#57b26a"
 BAR_COLOR_NEGATIVE = "#d85756"
 CARD_BORDER_COLOR = "#414042"
@@ -567,13 +567,13 @@ def _build_period_figure(category_entry: dict[str, Any], period: str, max_abs_va
         bargap=0.3,
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-    margin={"l": 8, "r": 8, "t": 36, "b": 12},
+        margin={"l": 8, "r": 8, "t": 36, "b": 12},
         showlegend=False,
-        font=dict(family="Open Sans, Arial, sans-serif"),
-        hoverlabel=dict(font=dict(family="Open Sans, Arial, sans-serif")),
+        font=dict(family="Open Sans, Arial, sans-serif", color="#FFFFFF"),
+        hoverlabel=dict(font=dict(family="Open Sans, Arial, sans-serif", color="#FFFFFF")),
     )
 
-    fig.update_traces(textfont={"size": 9, "family": "Open Sans, Arial, sans-serif"})
+    fig.update_traces(textfont={"size": 9, "family": "Open Sans, Arial, sans-serif", "color": "#FFFFFF"})
 
     x_range = [-x_limit * 1.05, x_limit * 1.05]
     fig.update_xaxes(
@@ -635,9 +635,17 @@ def _build_period_figure(category_entry: dict[str, Any], period: str, max_abs_va
         )
 
     period_label = PERIOD_LABELS.get(period, period.title())
-    fig.update_layout(
-        title=dict(text=period_label, x=0.5, xanchor="center", y=0.98, font=dict(color="#FFFFFF", size=16)),
-    )
+    if period_label:
+        fig.add_annotation(
+            text=period_label,
+            x=0.5,
+            y=1.08,
+            xref="paper",
+            yref="paper",
+            showarrow=False,
+            font=dict(color="#FFFFFF", size=16, family="Open Sans, Arial, sans-serif"),
+        )
+    fig.update_layout(title=dict(text=""))
 
     return fig
 
@@ -757,7 +765,7 @@ def _format_category_title(raw: Any) -> str:
 
 add_report(
     ReportEntry(
-        code="CLIENT_ACTIVITY_TOP",
+        code="client_activity_top",
         name="Активность по ТОП 10 клиентам",
         route="/reports/client-activities",
         layout=layout,

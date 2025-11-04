@@ -146,6 +146,9 @@ def register_routes(app: Dash) -> None:
                     navbar_style,
                     frame_style,
                 )
+            if report_entry.route == "/reports/deal-funnel":
+                frame_style = frame_style.copy()
+                frame_style.update({"maxWidth": "100%", "width": "100%"})
             return (
                 report_entry.layout(),
                 user_display,

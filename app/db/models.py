@@ -82,10 +82,12 @@ class Group(TimestampMixin, ActivatableMixin, Base):
         primaryjoin=lambda: Group.group_id == UserGroup.group_id,
         secondaryjoin=lambda: User.user_id == UserGroup.user_id,
         back_populates="groups",
+        overlaps="group_assignments,users",
     )
     roles: Mapped[list[Role]] = relationship(
         secondary="auth.group_roles",
         back_populates="groups",
+        overlaps="group_assignments",
     )
 
     user_assignments: Mapped[list["UserGroup"]] = relationship(
@@ -118,12 +120,13 @@ class Report(TimestampMixin, ActivatableMixin, Base):
         primaryjoin=lambda: Report.report_id == RoleReport.report_id,
         secondaryjoin=lambda: Role.role_id == RoleReport.role_id,
         back_populates="reports",
+        overlaps="report_assignments",
     )
     role_links: Mapped[list["RoleReport"]] = relationship(
         "RoleReport",
         back_populates="report",
         cascade="all, delete-orphan",
-        overlaps="roles",
+        overlaps="roles,report_assignments,reports",
     )
 
 
@@ -148,6 +151,7 @@ class User(TimestampMixin, ActivatableMixin, Base):
         primaryjoin=lambda: User.user_id == UserRole.user_id,
         secondaryjoin=lambda: Role.role_id == UserRole.role_id,
         back_populates="users",
+        overlaps="user_assignments",
     )
     groups: Mapped[list[Group]] = relationship(
         "Group",
@@ -155,6 +159,7 @@ class User(TimestampMixin, ActivatableMixin, Base):
         primaryjoin=lambda: User.user_id == UserGroup.user_id,
         secondaryjoin=lambda: Group.group_id == UserGroup.group_id,
         back_populates="users",
+        overlaps="group_assignments,user_assignments",
     )
 
     role_links: Mapped[list["UserRole"]] = relationship(
@@ -162,14 +167,14 @@ class User(TimestampMixin, ActivatableMixin, Base):
         foreign_keys=lambda: [UserRole.user_id],
         back_populates="user",
         cascade="all, delete-orphan",
-        overlaps="roles,user_assignments",
+        overlaps="roles,user_assignments,users",
     )
     group_links: Mapped[list["UserGroup"]] = relationship(
         "UserGroup",
         foreign_keys=lambda: [UserGroup.user_id],
         back_populates="user",
         cascade="all, delete-orphan",
-        overlaps="groups,user_assignments",
+        overlaps="groups,user_assignments,users",
     )
     sessions: Mapped[list["UserSession"]] = relationship(
         "UserSession",
@@ -191,8 +196,17 @@ class UserRole(Base):
     assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     assigned_by: Mapped[Optional[int]] = mapped_column(ForeignKey("auth.users.user_id"))
 
-    user: Mapped[User] = relationship("User", foreign_keys=[user_id], back_populates="role_links")
-    role: Mapped[Role] = relationship("Role", back_populates="user_assignments")
+    user: Mapped[User] = relationship(
+        "User",
+        foreign_keys=[user_id],
+        back_populates="role_links",
+        overlaps="roles,users",
+    )
+    role: Mapped[Role] = relationship(
+        "Role",
+        back_populates="user_assignments",
+        overlaps="users",
+    )
     assigned_by_user: Mapped[Optional[User]] = relationship("User", foreign_keys=[assigned_by])
 
 
@@ -210,7 +224,7 @@ class UserGroup(Base):
     joined_by: Mapped[Optional[int]] = mapped_column(ForeignKey("auth.users.user_id"))
 
     user: Mapped[User] = relationship("User", foreign_keys=[user_id], back_populates="group_links")
-    group: Mapped[Group] = relationship("Group", back_populates="user_assignments")
+    group: Mapped[Group] = relationship("Group", back_populates="user_assignments", overlaps="groups,users")
     joined_by_user: Mapped[Optional[User]] = relationship("User", foreign_keys=[joined_by])
 
 

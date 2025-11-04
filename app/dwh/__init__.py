@@ -13,6 +13,12 @@ from .product_dynamics import (
     get_product_dynamics_service,
     set_product_dynamics_service,
 )
+from .deal_pipeline import (
+    DealPipelineRow,
+    DealPipelineService,
+    get_deal_pipeline_service,
+    set_deal_pipeline_service,
+)
 from .top_client_activities import (
     CategoryActivities,
     ClientActivityDetailRow,
@@ -34,6 +40,10 @@ __all__ = [
     "ProductDynamicsService",
     "get_product_dynamics_service",
     "set_product_dynamics_service",
+    "DealPipelineRow",
+    "DealPipelineService",
+    "get_deal_pipeline_service",
+    "set_deal_pipeline_service",
     "CategoryActivities",
     "ClientActivityDetailRow",
     "ClientActivityRow",

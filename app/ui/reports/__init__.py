@@ -7,6 +7,7 @@ from . import sales_dashboard  # noqa: F401
 from . import product_dynamics  # noqa: F401
 from . import product_regional_analytics  # noqa: F401
 from . import top_client_activities  # noqa: F401
+from . import deal_pipeline  # noqa: F401
 
 __all__ = [
     "ReportEntry",

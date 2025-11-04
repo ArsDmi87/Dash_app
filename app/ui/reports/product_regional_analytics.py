@@ -300,7 +300,19 @@ def layout() -> Component:
                                 ],
                                 xs=12,
                                 md=4,
-                            )
+                            ),
+                            dbc.Col(
+                                dbc.Button(
+                                    "Сброс фильтров",
+                                    id="regional-reset-filters",
+                                    color="secondary",
+                                    outline=True,
+                                    className="mt-4 mt-md-0",
+                                ),
+                                xs=12,
+                                md="auto",
+                                className="d-flex align-items-end justify-content-md-end",
+                            ),
                         ]
                     ),
                     style=TRANSPARENT_CARD_BODY_STYLE.copy(),
@@ -387,19 +399,28 @@ def layout() -> Component:
 
 def register_callbacks(app: Dash) -> None:
     @app.callback(
-        Output("regional-selected-region", "data"),
+        Output("regional-product-filter", "value"),
+        Output("regional-selected-region", "data", allow_duplicate=True),
+        Input("regional-reset-filters", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def reset_filters(_: int | None):
+        return ALL_PRODUCTS_VALUE, None
+
+    @app.callback(
+        Output("regional-selected-region", "data", allow_duplicate=True),
         Input("regional-product-map", "clickData"),
         State("regional-selected-region", "data"),
         prevent_initial_call=True,
     )
-    def toggle_region(click_data: dict | None, current: str | None):
+    def toggle_region(click_data: dict | None, current_region: str | None):
         if not click_data or not click_data.get("points"):
             return no_update
         point = click_data["points"][0]
         next_code = _extract_region_code(point)
-        if not next_code:
+        if next_code is None:
             return no_update
-        current_normalized = _normalize_region_code(current) if isinstance(current, str) else None
+        current_normalized = _normalize_region_code(current_region) if isinstance(current_region, str) else None
         if current_normalized == next_code:
             return None
         return next_code
@@ -711,7 +732,7 @@ def _format_amount(value: float) -> str:
 
 add_report(
     ReportEntry(
-        code="PRODUCT_REGION_ANALYTICS",
+        code="product_region_analytics",
         name="Продуктовая аналитика в региональном разрезе",
         route="/reports/product-region-analytics",
         layout=layout,

@@ -164,7 +164,9 @@ class AdminService:
         with self._session_scope() as session:
             stmt = select(Report)
             if not include_inactive:
-                stmt = stmt.where(Report.is_active.is_(True))
+                stmt = stmt.where(
+                    (Report.is_active.is_(True)) | (Report.is_active.is_(None))
+                )
             reports = session.execute(stmt).scalars().all()
             return [self._to_report_summary(report) for report in reports]
 

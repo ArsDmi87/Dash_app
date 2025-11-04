@@ -311,7 +311,6 @@ def layout() -> Component:
                                         "backgroundColor": "rgba(255, 255, 255, 0.16)",
                                         "color": "#FFFFFF",
                                     },
-                                    {"if": {"row_index": "last"}, "borderBottom": "none"},
                                 ],
                             ),
                             className="modal-table-wrapper",
@@ -895,7 +894,7 @@ def _prepare_detail_rows(rows: Iterable[Any]) -> list[dict[str, Any]]:
 
 add_report(
     ReportEntry(
-        code="PRODUCT_DYNAMICS",
+        code="product_dynamics",
         name="Динамика по продуктам",
         route="/reports/product-dynamics",
         layout=layout,
