@@ -13,6 +13,7 @@ from app.dwh import (
     ProductDynamicsService,
     ProductFlows,
     ProductTotals,
+    QuarterKPI,
     get_product_dynamics_service,
 )
 from .registry import ReportEntry, add_report
@@ -52,6 +53,28 @@ PANEL_STYLE = {
 }
 
 DELTA_DIVIDER_COLOR = "#3E3861"
+KPI_QUARTER = 4
+KPI_CATEGORY_ORDER = [
+    "Привлеченные средства",
+    "Кредиты",
+    "Гарантии",
+    "Факторинг",
+]
+KPI_FACT_COLOR = "#8A6FF7"
+KPI_FORECAST_COLOR = "#FF9F66"
+KPI_MAX_RATIO = 200.0
+KPI_HISTORY_QUARTER_LABELS = {
+    1: "I кв.",
+    2: "II кв.",
+    3: "III кв.",
+    4: "IV кв.",
+}
+KPI_HISTORY_COLORS = {
+    "Привлеченные средства": KPI_FACT_COLOR,
+    "Кредиты": KPI_FACT_COLOR,
+    "Гарантии": KPI_FACT_COLOR,
+    "Факторинг": KPI_FACT_COLOR,
+}
 
 DETAIL_COLUMNS: list[dict[str, Any]] = [
     {"id": "department", "name": "Департамент"},
@@ -119,6 +142,47 @@ def layout() -> Component:
                 ),
                 className="mt-3 filter-card",
                 style=FILTER_CARD_STYLE.copy(),
+            ),
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        html.Span(
+                                            f"{KPI_QUARTER} квартал",
+                                            className="product-dynamics-kpi-quarter text-uppercase fw-semibold",
+                                        ),
+                                        html.H4(
+                                            "Исполнение KPI",
+                                            className="mb-0 text-white product-dynamics-kpi-title",
+                                        ),
+                                    ],
+                                    className="d-flex flex-column gap-2",
+                                ),
+                                dbc.Button(
+                                    "Результаты предыдущих кварталов",
+                                    id="product-dynamics-kpi-history-link",
+                                    color="link",
+                                    className="p-0 product-dynamics-kpi-history-link",
+                                ),
+                            ],
+                            className="product-dynamics-kpi-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3",
+                        ),
+                        dcc.Loading(
+                            html.Div(
+                                id="product-dynamics-kpi-content",
+                                className="product-dynamics-kpi-groups",
+                            ),
+                            type="default",
+                            color=SPINNER_COLOR,
+                        ),
+                    ],
+                    style=TRANSPARENT_CARD_BODY_STYLE.copy(),
+                ),
+                className="mt-4 chart-card product-dynamics-kpi-card",
+                style=CHART_CARD_STYLE.copy(),
             ),
             dbc.Card(
                 dbc.CardBody(
@@ -270,6 +334,34 @@ def layout() -> Component:
             ),
             dbc.Modal(
                 [
+                    dbc.ModalHeader(dbc.ModalTitle("Результаты предыдущих кварталов")),
+                    dbc.ModalBody(
+                        dcc.Loading(
+                            html.Div(
+                                id="product-dynamics-kpi-history",
+                                className="product-dynamics-kpi-history-grid",
+                            ),
+                            type="default",
+                            color=SPINNER_COLOR,
+                        ),
+                        className="text-white",
+                    ),
+                    dbc.ModalFooter(
+                        dbc.Button(
+                            "Закрыть",
+                            id="product-dynamics-kpi-history-close",
+                            color="primary",
+                            className="product-dynamics-kpi-close",
+                        )
+                    ),
+                ],
+                id="product-dynamics-kpi-history-modal",
+                is_open=False,
+                size="xl",
+                centered=True,
+            ),
+            dbc.Modal(
+                [
                     dbc.ModalHeader(dbc.ModalTitle(id="product-dynamics-detail-title")),
                     dbc.ModalBody(
                         html.Div(
@@ -334,6 +426,23 @@ def layout() -> Component:
 
 
 def register_callbacks(app) -> None:
+    @app.callback(
+        Output("product-dynamics-kpi-content", "children"),
+        Input("product-dynamics-department-filter", "value"),
+    )
+    def refresh_quarter_kpi(_department_value):
+        service = _service_or_none()
+        if not service:
+            return _build_kpi_placeholder("Источник данных не настроен. Укажите DWH_DB_DSN.")
+        try:
+            kpi_rows = service.fetch_quarter_kpi(quarter=KPI_QUARTER)
+        except Exception as exc:  # pragma: no cover - runtime diagnostics only
+            logger.exception("Failed to load KPI data for quarter %s: %s", KPI_QUARTER, exc)
+            return _build_kpi_placeholder("Не удалось загрузить KPI. Проверьте соединение с DWH.")
+        if not kpi_rows:
+            return _build_kpi_placeholder(f"Нет данных за {KPI_QUARTER} квартал.")
+        return _build_kpi_groups(kpi_rows)
+
     @app.callback(
         Output("product-dynamics-top-chart", "figure"),
         Output("product-dynamics-feedback", "children"),
@@ -437,6 +546,38 @@ def register_callbacks(app) -> None:
         return (*figures, *titles, meta)
 
     @app.callback(
+        Output("product-dynamics-kpi-history-modal", "is_open"),
+        Input("product-dynamics-kpi-history-link", "n_clicks"),
+        Input("product-dynamics-kpi-history-close", "n_clicks"),
+        State("product-dynamics-kpi-history-modal", "is_open"),
+        prevent_initial_call=True,
+    )
+    def toggle_kpi_history_modal(open_clicks, close_clicks, is_open):
+        trigger = ctx.triggered_id
+        if trigger == "product-dynamics-kpi-history-link":
+            return True
+        if trigger == "product-dynamics-kpi-history-close":
+            return False
+        return is_open
+
+    @app.callback(
+        Output("product-dynamics-kpi-history", "children"),
+        Input("product-dynamics-kpi-history-modal", "is_open"),
+    )
+    def refresh_kpi_history(is_open):
+        if not is_open:
+            return no_update
+        service = _service_or_none()
+        if not service:
+            return _build_kpi_placeholder("Источник данных не настроен. Укажите DWH_DB_DSN.")
+        try:
+            history_rows = service.fetch_kpi_history()
+        except Exception as exc:  # pragma: no cover - runtime diagnostics only
+            logger.exception("Failed to load KPI history: %s", exc)
+            return _build_kpi_placeholder("Не удалось загрузить историю KPI. Проверьте соединение с DWH.")
+        return _build_kpi_history_view(history_rows)
+
+    @app.callback(
         Output("product-dynamics-detail-modal", "is_open"),
         Output("product-dynamics-detail-title", "children"),
         Output("product-dynamics-detail-table", "data"),
@@ -516,6 +657,241 @@ def _deserialize_departments(value: str | None) -> list[str] | None:
     if not value or value == ALL_DEPARTMENTS_VALUE:
         return None
     return [value]
+
+
+def _build_kpi_placeholder(message: str) -> Component:
+    return html.Div(
+        message,
+        className="text-muted product-dynamics-kpi-empty",
+    )
+
+
+def _build_kpi_groups(rows: Iterable[QuarterKPI]) -> Component:
+    metrics = _prepare_kpi_metrics(rows)
+    if not metrics:
+        return _build_kpi_placeholder(f"Нет данных за {KPI_QUARTER} квартал.")
+    fact_group = _build_kpi_group("Фактическое исполнение", metrics, "fact_ratio", KPI_FACT_COLOR)
+    forecast_group = _build_kpi_group("Прогноз исполнения", metrics, "forecast_ratio", KPI_FORECAST_COLOR)
+    return html.Div([fact_group, forecast_group], className="product-dynamics-kpi-groups")
+
+
+def _prepare_kpi_metrics(rows: Iterable[QuarterKPI]) -> list[dict[str, Any]]:
+    prepared: list[dict[str, Any]] = []
+    for row in rows:
+        category = row.category or "—"
+        prepared.append(
+            {
+                "label": _normalize_product_title(category),
+                "fact_ratio": _calculate_ratio(row.fact, row.plan),
+                "forecast_ratio": _calculate_ratio(row.forecast, row.plan),
+                "order": _kpi_order_index(category),
+            }
+        )
+    prepared.sort(key=lambda item: item["order"])
+    return prepared
+
+
+def _build_kpi_group(title: str, metrics: list[dict[str, Any]], ratio_key: str, color: str) -> html.Div:
+    metric_columns = [
+        dbc.Col(
+            _build_kpi_metric_card(metric, ratio_key, color),
+            xs=12,
+            sm=6,
+            lg=3,
+            className="d-flex justify-content-center",
+        )
+        for metric in metrics
+    ]
+    return html.Div(
+        [
+            html.Div(title, className="product-dynamics-kpi-group-title"),
+            dbc.Row(metric_columns, className="row product-dynamics-kpi-metrics gy-3"),
+        ],
+        className="product-dynamics-kpi-group",
+    )
+
+
+def _build_kpi_metric_card(metric: dict[str, Any], ratio_key: str, color: str) -> html.Div:
+    ratio = metric.get(ratio_key)
+    value_text = "—" if ratio is None else f"{ratio:.0f}%"
+    donut_chart = dcc.Graph(
+        figure=_build_kpi_donut_figure(ratio, color, value_text),
+        config={"displayModeBar": False, "staticPlot": True, "responsive": False},
+        className="product-dynamics-kpi-donut-chart",
+        style={"height": "140px", "width": "140px"},
+    )
+    return html.Div(
+        [
+            donut_chart,
+            html.Div(
+                [
+                    html.Div(metric["label"], className="product-dynamics-kpi-label"),
+                ],
+                className="product-dynamics-kpi-text",
+            ),
+        ],
+        className="product-dynamics-kpi-metric",
+    )
+
+
+def _kpi_order_index(category: str | None) -> int:
+    normalized = (category or "").strip().lower()
+    for idx, name in enumerate(KPI_CATEGORY_ORDER):
+        if normalized == name.lower():
+            return idx
+    return len(KPI_CATEGORY_ORDER)
+
+
+def _calculate_ratio(value: float, plan: float) -> float | None:
+    if plan <= 0:
+        return None
+    ratio = (value / plan) * 100
+    return max(0.0, min(ratio, KPI_MAX_RATIO))
+
+
+def _build_kpi_donut_figure(ratio: float | None, color: str, label: str) -> go.Figure:
+    clamped_ratio = max(0.0, min(ratio if ratio is not None else 0.0, 100.0))
+    remainder = 100.0 - clamped_ratio
+    # Plotly pie slices require positive numbers, so keep tiny epsilon for empty states.
+    values = [
+        clamped_ratio if clamped_ratio > 0 else 0.0001,
+        remainder if remainder > 0 else 0.0001,
+    ]
+    progress_color = color if clamped_ratio > 0 else "rgba(255, 255, 255, 0.12)"
+    background_color = "rgba(255, 255, 255, 0.18)"
+    fig = go.Figure(
+        data=[
+            go.Pie(
+                values=values,
+                hole=0.72,
+                sort=False,
+                direction="clockwise",
+                marker=dict(
+                    colors=[progress_color, background_color],
+                    line=dict(color="rgba(0,0,0,0)", width=0),
+                ),
+                textinfo="none",
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        ]
+    )
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        showlegend=False,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        annotations=[
+            dict(
+                text=label,
+                x=0.5,
+                y=0.5,
+                font=dict(size=20, color="#FFFFFF", family="Open Sans, Arial, sans-serif"),
+                showarrow=False,
+            )
+        ],
+    )
+    return fig
+
+
+def _build_kpi_history_view(rows: Iterable[QuarterKPI]) -> Component:
+    matrix, quarter_order = _prepare_kpi_history_matrix(rows)
+    if not matrix or not quarter_order:
+        return _build_kpi_placeholder("Нет данных по предыдущим кварталам.")
+
+    header_cells: list[Component] = [
+        html.Th("Продукт", className="product-dynamics-kpi-history-header product-dynamics-kpi-history-product"),
+    ] + [
+        html.Th(_format_quarter_label(quarter), className="product-dynamics-kpi-history-header") for quarter in quarter_order
+    ]
+
+    body_rows: list[Component] = []
+    for product in _history_product_order(matrix.keys()):
+        quarter_values = matrix.get(product, {})
+        row_cells: list[Component] = [html.Th(product, className="product-dynamics-kpi-history-product")]
+        for quarter in quarter_order:
+            ratio = quarter_values.get(quarter)
+            row_cells.append(
+                html.Td(
+                    _build_kpi_history_progress(ratio, _history_color(product)),
+                    className="product-dynamics-kpi-history-cell",
+                )
+            )
+        body_rows.append(html.Tr(row_cells))
+
+    return html.Div(
+        html.Table(
+            [
+                html.Thead(html.Tr(header_cells)),
+                html.Tbody(body_rows),
+            ],
+            className="product-dynamics-kpi-history-table",
+        )
+    )
+
+
+def _prepare_kpi_history_matrix(rows: Iterable[QuarterKPI]) -> tuple[dict[str, dict[int, float | None]], list[int]]:
+    matrix: dict[str, dict[int, float | None]] = {}
+    quarters: set[int] = set()
+    for row in rows:
+        product = _normalize_product_title(row.category)
+        ratio = _calculate_ratio(row.fact, row.plan)
+        quarter = row.quarter if isinstance(row.quarter, int) else None
+        if not quarter or quarter <= 0:
+            continue
+        quarters.add(quarter)
+        product_ratios = matrix.setdefault(product, {})
+        product_ratios[quarter] = ratio
+    quarter_order = [1, 2, 3, 4]
+    extra_quarters = sorted(quarters - set(quarter_order))
+    quarter_order.extend(extra_quarters)
+    return matrix, quarter_order
+
+
+def _history_product_order(products: Iterable[str]) -> list[str]:
+    ordered: list[str] = []
+    normalized_products = {name.lower(): name for name in products}
+    for reference in KPI_CATEGORY_ORDER:
+        ref_normalized = reference.lower()
+        for key, original in list(normalized_products.items()):
+            if key == ref_normalized:
+                ordered.append(original)
+                normalized_products.pop(key, None)
+                break
+    ordered.extend(sorted(normalized_products.values()))
+    return ordered
+
+
+def _history_color(product: str) -> str:
+    return KPI_FACT_COLOR
+
+
+def _format_quarter_label(quarter: int) -> str:
+    return KPI_HISTORY_QUARTER_LABELS.get(quarter, f"{quarter} кв.")
+
+
+def _build_kpi_history_progress(ratio: float | None, color: str) -> html.Div:
+    value_text = "—" if ratio is None else f"{ratio:.0f}%"
+    fill_width = 0.0 if ratio is None else min(max(ratio, 0.0), KPI_MAX_RATIO)
+    percent_width = min(fill_width, 100.0)
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.Div(
+                        className="product-dynamics-kpi-history-progress-fill",
+                        style={
+                            "width": f"{percent_width:.0f}%",
+                            "--progress-color": color,
+                        },
+                    ),
+                    html.Div(value_text, className="product-dynamics-kpi-history-progress-text"),
+                ],
+                className="product-dynamics-kpi-history-progress-track",
+            )
+        ],
+        className="product-dynamics-kpi-history-progress",
+    )
 
 
 def _build_combined_totals_figure(totals: Iterable[ProductTotals]) -> go.Figure:

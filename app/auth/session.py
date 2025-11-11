@@ -4,12 +4,15 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict
 
+import logging
+
 from flask import Request, request
 from flask.sessions import SessionInterface, SessionMixin
 from werkzeug.datastructures import CallbackDict
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session as SASession, sessionmaker
+from sqlalchemy.exc import OperationalError
 
 from app.core.settings import Settings, get_settings
 from app.db.models import UserSession
@@ -55,6 +58,7 @@ class DatabaseSessionInterface(SessionInterface):
         session_factory: sessionmaker[SASession] | None = None,
         settings: Settings | None = None,
     ) -> None:
+        self.logger = logging.getLogger(__name__)
         self.settings = settings or get_settings()
         self.session_factory = session_factory or get_auth_session_factory(self.settings)
         self.cookie_name = self.settings.session_cookie_name
@@ -86,6 +90,9 @@ class DatabaseSessionInterface(SessionInterface):
             session_obj.permanent = True
             session_obj.modified = False
             return session_obj
+        except OperationalError as exc:
+            self.logger.warning("Failed to load session from database: %s", exc)
+            return self._create_session(new=True)
         finally:
             db.close()
 
@@ -156,6 +163,16 @@ class DatabaseSessionInterface(SessionInterface):
                     record.user_agent = user_agent
                     record.user_id = user_id
                 db.commit()
+        except OperationalError as exc:
+            self.logger.error("Failed to persist session in database: %s", exc)
+            response.delete_cookie(
+                self.cookie_name,
+                path=path,
+                domain=domain,
+                samesite=samesite,
+            )
+            db_session.modified = False
+            return
         finally:
             db.close()
 

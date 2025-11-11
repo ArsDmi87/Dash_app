@@ -114,6 +114,101 @@
   font-weight: 600 !important;
 }
 
+.report-product-dynamics .product-dynamics-kpi-card .card-body {
+  gap: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-product-dynamics .product-dynamics-kpi-quarter {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.report-product-dynamics .product-dynamics-kpi-header {
+  margin-bottom: 12px;
+}
+
+.report-product-dynamics .product-dynamics-kpi-history-link {
+  color: #9fd3ff !important;
+  text-decoration: underline !important;
+  font-weight: 500 !important;
+}
+
+.report-product-dynamics .product-dynamics-kpi-title {
+  font-weight: 600;
+}
+
+.report-product-dynamics .product-dynamics-kpi-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.report-product-dynamics .product-dynamics-kpi-group-title {
+  font-weight: 600;
+  font-size: 1.35rem;
+  color: #FFFFFF !important;
+  margin-top: 8px;
+  margin-bottom: 18px;
+}
+
+.report-product-dynamics .product-dynamics-kpi-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-product-dynamics .product-dynamics-kpi-metrics {
+  margin-top: 20px;
+}
+
+.report-product-dynamics .product-dynamics-kpi-metric {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 14px 18px;
+  background-color: rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 180px;
+}
+
+.report-product-dynamics .product-dynamics-kpi-donut-chart {
+  flex-shrink: 0;
+  width: 140px;
+}
+
+.report-product-dynamics .product-dynamics-kpi-donut-chart .main-svg {
+  overflow: visible !important;
+}
+
+.report-product-dynamics .product-dynamics-kpi-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  text-align: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.report-product-dynamics .product-dynamics-kpi-label {
+  font-weight: 600;
+  color: #FFFFFF !important;
+  width: 100%;
+  text-align: center;
+}
+
+.report-product-dynamics .product-dynamics-kpi-empty {
+  text-align: center;
+  padding: 24px 0;
+}
+
 .report-deal-pipeline .filter-card.card,
 .report-deal-pipeline .table-card.card {
   background-color: transparent !important;

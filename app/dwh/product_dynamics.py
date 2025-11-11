@@ -46,6 +46,15 @@ class DetailRow:
     value: float
 
 
+@dataclass(frozen=True)
+class QuarterKPI:
+    category: str
+    quarter: int
+    plan: float
+    fact: float
+    forecast: float
+
+
 class ProductDynamicsService:
     """Read analytics for the product dynamics dashboard."""
 
@@ -77,12 +86,19 @@ class ProductDynamicsService:
         self.session_factory = session_factory or get_dwh_session_factory(self.settings)
         self.schema = schema
         self.table = table
+        self._kpi_table = "novikom2"
 
     @property
     def qualified_table(self) -> str:
         if self.schema:
             return f"{self.schema}.{self.table}"
         return self.table
+
+    @property
+    def qualified_kpi_table(self) -> str:
+        if self.schema:
+            return f"{self.schema}.{self._kpi_table}"
+        return self._kpi_table
 
     @contextmanager
     def _session_scope(self) -> Iterator[Session]:
@@ -329,6 +345,38 @@ class ProductDynamicsService:
             )
         return details
 
+    def fetch_kpi_history(self) -> list[QuarterKPI]:
+        sql = text(
+            "SELECT\n"
+            '    "Категория" AS category,\n'
+            '    "Квартал" AS quarter,\n'
+            '    COALESCE("План_млрд_руб", 0) AS plan_value,\n'
+            '    COALESCE("Факт_млрд_руб", 0) AS fact_value,\n'
+            '    COALESCE("Прогноз_млрд_руб", 0) AS forecast_value\n'
+            f"FROM {self.qualified_kpi_table}\n"
+            'ORDER BY "Категория", "Квартал"'
+        )
+        with self._session_scope() as session:
+            rows = session.execute(sql).mappings().all()
+        return [_map_kpi_row(row, default_quarter=None) for row in rows]
+
+    def fetch_quarter_kpi(self, *, quarter: int) -> list[QuarterKPI]:
+        sql = text(
+            "SELECT\n"
+            '    "Категория" AS category,\n'
+            '    "Квартал" AS quarter,\n'
+            '    COALESCE("План_млрд_руб", 0) AS plan_value,\n'
+            '    COALESCE("Факт_млрд_руб", 0) AS fact_value,\n'
+            '    COALESCE("Прогноз_млрд_руб", 0) AS forecast_value\n'
+            f"FROM {self.qualified_kpi_table}\n"
+            'WHERE "Квартал" = :quarter\n'
+            "ORDER BY category"
+        )
+        params = {"quarter": int(quarter)}
+        with self._session_scope() as session:
+            rows = session.execute(sql, params).mappings().all()
+        return [_map_kpi_row(row, default_quarter=quarter) for row in rows]
+
     def _build_filters(
         self,
         *,
@@ -397,3 +445,20 @@ def get_product_dynamics_service() -> ProductDynamicsService:
     if _product_dynamics_service is None:
         _product_dynamics_service = ProductDynamicsService()
     return _product_dynamics_service
+
+
+def _map_kpi_row(row: Any, default_quarter: int | None) -> QuarterKPI:
+    category = _ensure_str_or_none(row.get("category")) or "—"
+    quarter_value = row.get("quarter")
+    quarter_number: int
+    try:
+        quarter_number = int(quarter_value)
+    except (TypeError, ValueError):
+        quarter_number = int(default_quarter) if default_quarter is not None else 0
+    return QuarterKPI(
+        category=category,
+        quarter=quarter_number,
+        plan=_to_float(row.get("plan_value")),
+        fact=_to_float(row.get("fact_value")),
+        forecast=_to_float(row.get("forecast_value")),
+    )
